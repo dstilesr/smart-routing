@@ -24,9 +24,27 @@ profile.cov
 go.work
 go.work.sum
 
-# env file
-.env
-
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+
+# Python
+**/__pycache__/
+**/.ipynb_checkpoints
+**/build/
+**/dist/
+
+venv
+.venv
+
+# Envs
+**/*.env
+
+# Python bytecode
+*.py[cod]
+
+# Task
+**/.task
+
+# MAC
+**/.DS_Store
