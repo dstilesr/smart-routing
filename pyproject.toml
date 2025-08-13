@@ -15,3 +15,23 @@ worker = { workspace = true }
 members = [
     "packages/*",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.8",
+]
+
+[tool.ruff]
+line-length = 80
+indent-width = 4
+exclude = [
+    "venv",
+    ".venv",
+    "**/.ipynb_checkpoints",
+]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+line-ending = "lf"
