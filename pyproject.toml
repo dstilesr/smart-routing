@@ -1,0 +1,9 @@
+[project]
+name = "smart-routing"
+version = "0.1.0"
+description = "POC for smart routing between workers"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "redis>=6.4.0,<7",
+]
