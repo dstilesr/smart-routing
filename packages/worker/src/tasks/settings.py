@@ -6,7 +6,15 @@ class WorkerSettings(BaseSettings):
     """
     Settings for the worker.
     """
-    redis_host: str = Field(default="localhost")
-    redis_port: int = Field(default=6379)
+
+    redis_host: str = Field(
+        default="localhost", description="Redis server host"
+    )
+    redis_port: int = Field(default=6379, description="Redis server port")
+    max_labels: int = Field(
+        default=2,
+        gt=0,
+        description="Maximum number of labels to store per worker",
+    )
 
     model_config = SettingsConfigDict(env_prefix="WORKER_")
