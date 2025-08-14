@@ -9,3 +9,19 @@ dependencies = [
     "pydantic-settings>=2,<3",
     "redis>=6.4.0,<7",
 ]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+pythonpath = [
+    "src",
+]
+markers = [
+    "live_redis: Mark test to run only with a live Redis server running locally",
+]
+
+[dependency-groups]
+dev = [
+    "fakeredis>=2.31.0",
+]
