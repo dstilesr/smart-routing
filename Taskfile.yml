@@ -1,0 +1,11 @@
+version: 3
+tasks:
+  test-worker:
+    desc: Run unit tests for the worker code.
+    dir: packages/worker
+    cmd: uv run pytest {{.CLI_ARGS}}
+
+  unit-tests:
+    desc: Run unit tests for all components.
+    cmds:
+      - task: test-worker
