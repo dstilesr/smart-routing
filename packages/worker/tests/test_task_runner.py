@@ -22,7 +22,9 @@ def runner(redis_client):
     """
     from tasks.settings import WorkerSettings
 
-    settings = WorkerSettings(redis_host="localhost", redis_port=6379, max_labels=2)
+    settings = WorkerSettings(
+        redis_host="localhost", redis_port=6379, max_labels=2
+    )
     runner = TaskRunner(settings=settings)
     yield runner
     runner.label_handler.clear_all()
@@ -35,11 +37,13 @@ def test_runner_startup_shutdown(runner, redis_client):
     Test the startup and shutdown of the TaskRunner.
     """
     with runner:
-        assert redis_client.sismember(const.REGISTER_KEY, runner.uuid), \
+        assert redis_client.sismember(const.REGISTER_KEY, runner.uuid), (
             "Runner should be registered in Redis"
+        )
 
-    assert not redis_client.sismember(const.REGISTER_KEY, runner.uuid), \
+    assert not redis_client.sismember(const.REGISTER_KEY, runner.uuid), (
         "Runner should be unregistered after shutdown"
+    )
 
 
 @pytest.mark.live_redis
@@ -48,15 +52,17 @@ def test_runner_label_register(runner, redis_client):
     Test the label registration functionality of the TaskRunner.
     """
     with runner:
-        assert redis_client.sismember(const.REGISTER_KEY, runner.uuid), \
+        assert redis_client.sismember(const.REGISTER_KEY, runner.uuid), (
             "Runner should be registered in Redis"
+        )
 
         label = "test-label"
         runner.label_handler.add_label(label)
         key = const.LABEL_KEY_FMT.format(label=label)
 
-        assert redis_client.sismember(key, runner.uuid), \
+        assert redis_client.sismember(key, runner.uuid), (
             f"Runner UUID should be registered under label '{label}'"
+        )
 
 
 @pytest.mark.live_redis
@@ -65,12 +71,14 @@ def test_runner_label_deregister(runner, redis_client):
     Test the label deregistration functionality of the TaskRunner.
     """
     with runner:
-        assert redis_client.sismember(const.REGISTER_KEY, runner.uuid), \
+        assert redis_client.sismember(const.REGISTER_KEY, runner.uuid), (
             "Runner should be registered in Redis"
+        )
 
         label = "test-label"
         runner.label_handler.add_label(label)
         key = const.LABEL_KEY_FMT.format(label=label)
 
-    assert not redis_client.sismember(key, runner.uuid), \
+    assert not redis_client.sismember(key, runner.uuid), (
         "Runner UUID should be deregistered from label on shutdown"
+    )

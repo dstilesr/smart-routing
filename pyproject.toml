@@ -15,6 +15,9 @@ worker = { workspace = true }
 members = [
     "packages/*",
 ]
+exclude = [
+    "packages/dispatcher",
+]
 
 [dependency-groups]
 dev = [

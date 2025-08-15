@@ -2,7 +2,7 @@ import redis
 from uuid import uuid4
 from loguru import logger
 from types import TracebackType
-from typing import ContextManager, Type, Optional
+from typing import ContextManager, Type, Optional, Iterator
 
 from . import constants as const
 from .settings import WorkerSettings
@@ -30,6 +30,7 @@ class TaskRunner(ContextManager):
             redis_client=self.__redis,
             max_labels=self.__settings.max_labels,
         )
+        self.__queue = f"task-runners:{self.uuid}:jobs"
 
     @property
     def uuid(self) -> str:
@@ -75,6 +76,7 @@ class TaskRunner(ContextManager):
         """
         Register task runner on redis.
         """
+        self.update_availability(True)
         self.__redis.sadd(const.REGISTER_KEY, self.uuid)
         logger.info("Task runner registered [{}]", self.uuid)
 
@@ -82,6 +84,38 @@ class TaskRunner(ContextManager):
         """
         Deregister task runner from redis.
         """
+        self.update_availability(False)
         self.__redis.srem(const.REGISTER_KEY, self.uuid)
         self.label_handler.clear_all()
         logger.info("Task runner deregistered [{}]", self.uuid)
+
+    def update_availability(self, available: bool = True):
+        """
+        Mark the task runner as available.
+        :param available: Whether the task runner is available or not.
+        """
+        if available:
+            self.__redis.sadd(const.AVAILABLE_KEY, self.uuid)
+        else:
+            self.__redis.srem(const.AVAILABLE_KEY, self.uuid)
+
+    def listen(self) -> Iterator[str]:
+        """
+        Listen for tasks on the task runner's stream.
+        """
+        logger.info("Task runner listening for tasks [{}]", self.__queue)
+        while True:
+            try:
+                queue, task = self.__redis.blpop(
+                    [self.__queue, const.COMMON_QUEUE], timeout=0
+                )
+                logger.info("Received task from queue [{}]", queue)
+                if task:
+                    yield task
+
+            except redis.ConnectionError as e:
+                logger.error("Redis connection error: {}", e)
+                break
+            except Exception as e:
+                logger.error("Error while listening for tasks: {}", e)
+                break
