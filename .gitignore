@@ -49,3 +49,6 @@ venv
 
 # MAC
 **/.DS_Store
+
+# data
+_data

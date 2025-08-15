@@ -17,6 +17,7 @@ members = [
 ]
 exclude = [
     "packages/dispatcher",
+    "packages/log-collector",
 ]
 
 [dependency-groups]
