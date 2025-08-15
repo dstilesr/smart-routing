@@ -8,6 +8,7 @@ dependencies = [
     "pydantic>=2,<3",
     "pydantic-settings>=2,<3",
     "redis>=6.4.0,<7",
+    "requests>=2,<3",
 ]
 
 [tool.pytest.ini_options]
