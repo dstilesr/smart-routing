@@ -2,11 +2,17 @@ import redis
 from uuid import uuid4
 from loguru import logger
 from types import TracebackType
-from typing import ContextManager, Type, Optional, Iterator
+from pydantic import ValidationError
+from functools import wraps, lru_cache
+from typing import ContextManager, Type, Optional, Iterator, Callable
 
+from .schemas import TaskSchema
 from . import constants as const
 from .settings import WorkerSettings
 from .label_handler import LabelHandler
+
+
+TASK_TYPE = Callable[[LabelHandler, TaskSchema], ...]
 
 
 class TaskRunner(ContextManager):
@@ -31,6 +37,7 @@ class TaskRunner(ContextManager):
             max_labels=self.__settings.max_labels,
         )
         self.__queue = f"task-runners:{self.uuid}:jobs"
+        self.__task_handlers: dict[str, TASK_TYPE] = {}
 
     @property
     def uuid(self) -> str:
@@ -106,16 +113,81 @@ class TaskRunner(ContextManager):
         logger.info("Task runner listening for tasks [{}]", self.__queue)
         while True:
             try:
-                queue, task = self.__redis.blpop(
+                queue, task_raw = self.__redis.blpop(
                     [self.__queue, const.COMMON_QUEUE], timeout=0
                 )
                 logger.info("Received task from queue [{}]", queue)
-                if task:
-                    yield task
+                if not task_raw:
+                    continue
+
+                task = TaskSchema.model_validate_json(task_raw)
+                handler = self.__task_handlers[task.task_type]
+                result = handler(self.label_handler, task)
+                yield result
+
+            except ValidationError as e:
+                logger.error("Invalid Task received! {}", e)
+                continue
 
             except redis.ConnectionError as e:
                 logger.error("Redis connection error: {}", e)
                 break
+
             except Exception as e:
                 logger.error("Error while listening for tasks: {}", e)
                 break
+
+    def add_task_function(
+        self, task_type: str | None = None
+    ) -> Callable[[TASK_TYPE], TASK_TYPE]:
+        """
+        Register a function that will handle tasks.
+        :param task_type: Optional type of the task to be handled. If not
+            provided, the function name will be used.
+        :return:
+        """
+
+        def decorator(func: TASK_TYPE) -> TASK_TYPE:
+            """
+            Decorator to register a task handler function.
+            """
+            nonlocal task_type
+            if not task_type:
+                task_type = func.__name__
+
+            @wraps(func)
+            def wrapper(lh: LabelHandler, task: TaskSchema):
+                result = None
+                try:
+                    self.update_availability(False)
+                    result = func(lh, task)
+                except Exception as e:
+                    logger.error(
+                        "Error while executing task [{}]: {}",
+                        task_type,
+                        e,
+                    )
+                    raise e
+                finally:
+                    self.update_availability(True)
+
+                return result
+
+            self.__task_handlers[task_type] = wrapper
+            logger.info(
+                "Registered Task Handler [{}] for type [{}]",
+                func.__name__,
+                task_type,
+            )
+            return wrapper
+
+        return decorator
+
+
+@lru_cache(maxsize=1)
+def get_runner() -> TaskRunner:
+    """
+    Get the current task runner instance.
+    :return: The current task runner instance.
+    """
+    return TaskRunner()
