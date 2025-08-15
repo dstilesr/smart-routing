@@ -16,5 +16,10 @@ class WorkerSettings(BaseSettings):
         gt=0,
         description="Maximum number of labels to store per worker",
     )
+    result_ttl: int = Field(
+        default=1800,  # 30 minutes
+        gt=0,
+        description="Time to live for results in seconds",
+    )
 
     model_config = SettingsConfigDict(env_prefix="WORKER_")

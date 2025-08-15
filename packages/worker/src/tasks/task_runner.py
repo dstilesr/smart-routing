@@ -171,6 +171,12 @@ class TaskRunner(ContextManager):
                 finally:
                     self.update_availability(True)
 
+                if task.return_result:
+                    self.__redis.set(
+                        f"task-runners:results:{task.task_id}",
+                        result,
+                        ex=self.__settings.result_ttl,
+                    )
                 return result
 
             self.__task_handlers[task_type] = wrapper

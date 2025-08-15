@@ -14,3 +14,7 @@ class TaskSchema(BaseModel):
     parameters_json: str = Field(
         description="JSON string containing the parameters for the task"
     )
+    return_result: bool = Field(
+        default=False,
+        description="Flag indicating whether to return the result of the task",
+    )
