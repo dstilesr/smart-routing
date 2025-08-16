@@ -5,7 +5,13 @@ tasks:
     dir: packages/worker
     cmd: uv run pytest {{.CLI_ARGS}}
 
+  test-dispatcher:
+    desc: Run unit tests for the dispatcher code.
+    dir: packages/dispatcher/dispatcher
+    cmd: go test
+
   unit-tests:
     desc: Run unit tests for all components.
     cmds:
       - task: test-worker
+      - task: test-dispatcher
