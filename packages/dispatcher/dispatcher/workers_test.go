@@ -8,7 +8,7 @@ import (
 // Test worker availability checking functionality.
 func TestIsAvailable(t *testing.T) {
 	// Setup
-	r, c := mockRedis()
+	r, c := mockRedis(false)
 	defer r.Close()
 
 	_, err := r.SAdd(c, availableWorkersKey, "worker1").Result()
@@ -35,7 +35,7 @@ func TestIsAvailable(t *testing.T) {
 
 // Test sending a task to a worker's queue
 func TestSendTask(t *testing.T) {
-	r, c := mockRedis()
+	r, c := mockRedis(false)
 	defer r.Close()
 
 	wid := workerId("worker1")
