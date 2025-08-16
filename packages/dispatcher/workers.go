@@ -45,7 +45,7 @@ func (wid workerId) sendTask(t *taskRequest, r *redis.Client, c context.Context)
 		slog.Error("JSOn serialization error", "error", jsonErr)
 		return jsonErr
 	}
-	_, err := r.LPush(ctx, wid.getQueue(), tJson).Result()
+	_, err := r.RPush(ctx, wid.getQueue(), tJson).Result()
 	if err != nil {
 		slog.Error("Unable to send task!", "error", err)
 		return err

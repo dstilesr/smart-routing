@@ -15,4 +15,4 @@ if __name__ == "__main__":
     with tasks.get_runner() as runner:
         logger.info("Worker running...")
         for _ in runner.listen():
-            time.sleep(2)
+            time.sleep(0.1)
