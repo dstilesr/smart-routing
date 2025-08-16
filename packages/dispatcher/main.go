@@ -25,5 +25,10 @@ func main() {
 		func(w http.ResponseWriter, r *http.Request) {
 			dispatchTaskAPI(w, r, client)
 		})
+	http.HandleFunc(
+		"/run-task",
+		func(w http.ResponseWriter, r *http.Request) {
+			runTaskAPI(w, r, client)
+		})
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }

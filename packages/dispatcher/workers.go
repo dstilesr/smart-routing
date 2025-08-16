@@ -13,15 +13,11 @@ import (
 type workerId string
 
 type taskRequest struct {
-	TaskID     string `json:"task_id"`
-	TaskType   string `json:"task_type"`
-	Label      string `json:"label"`
-	Parameters string `json:"parameters_json"`
-}
-
-type taskChannelResult struct {
-	Success bool
-	Result  string
+	TaskID       string `json:"task_id"`
+	TaskType     string `json:"task_type"`
+	Label        string `json:"label"`
+	Parameters   string `json:"parameters_json"`
+	ReturnResult bool   `json:"return_result"`
 }
 
 func (wid workerId) getQueue() string {

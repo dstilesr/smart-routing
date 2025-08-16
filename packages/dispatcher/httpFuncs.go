@@ -100,3 +100,45 @@ func dispatchTaskAPI(w http.ResponseWriter, r *http.Request, rd *redis.Client) {
 	}
 	slog.Info("Sent task to worker", "worker_id", wid, "task_id", t.TaskID)
 }
+
+func runTaskAPI(w http.ResponseWriter, r *http.Request, rd *redis.Client) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var t taskRequest
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		slog.Error("Error decoding request body", "error", err)
+		return
+	}
+	if !t.ReturnResult {
+		http.Error(
+			w,
+			"Return result must be true to run the task with this method!",
+			http.StatusUnprocessableEntity,
+		)
+		return
+	}
+
+	wid, selectErr := selectWorkerQueue(&t, rd, r.Context(), true)
+
+	if selectErr != nil {
+		http.Error(w, "Error selecting worker", http.StatusInternalServerError)
+		slog.Error("Error selecting worker", "error", selectErr)
+		return
+	}
+
+	result, err := wid.runTask(&t, rd, r.Context())
+	if err != nil {
+		http.Error(w, "Eror when running task", http.StatusInternalServerError)
+		slog.Error("Error when running task", "error", err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	_, writeErr := w.Write([]byte(result))
+	if writeErr != nil {
+		slog.Error("Error writing response", "error", writeErr)
+	}
+}
