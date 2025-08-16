@@ -8,7 +8,7 @@ COPY src/go.sum .
 RUN go mod download
 
 # Compile
-COPY src/ .
+COPY dispatcher/ .
 RUN go build -v -o dispatcher .
 
 FROM debian:bookworm-slim
