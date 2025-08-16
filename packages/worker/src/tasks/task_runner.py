@@ -172,10 +172,9 @@ class TaskRunner(ContextManager):
                     self.update_availability(True)
 
                 if task.return_result:
-                    self.__redis.set(
+                    self.__redis.publish(
                         f"task-runners:results:{task.task_id}",
                         result,
-                        ex=self.__settings.result_ttl,
                     )
                 return result
 
