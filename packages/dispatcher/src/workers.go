@@ -11,16 +11,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type workerId string
-
-type taskRequest struct {
-	TaskID       string `json:"task_id"`
-	TaskType     string `json:"task_type"`
-	Label        string `json:"label"`
-	Parameters   string `json:"parameters_json"`
-	ReturnResult bool   `json:"return_result"`
-}
-
 func (wid workerId) getQueue() string {
 	return fmt.Sprintf("task-runners:%s:jobs", wid)
 }
