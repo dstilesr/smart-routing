@@ -55,3 +55,6 @@ _data
 
 # logs
 **/*.log
+
+# Binaries
+bin/

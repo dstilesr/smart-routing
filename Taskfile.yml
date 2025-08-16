@@ -15,3 +15,19 @@ tasks:
     cmds:
       - task: test-worker
       - task: test-dispatcher
+
+  start:
+    desc: Start the services (dispatcher, log-handler, worker, and redis)
+    cmd: docker compose up -d --build {{.CLI_ARGS}}
+
+  stop:
+    desc: Stop the services
+    cmd: docker compose down --rmi local
+
+  build-producer:
+    desc: Build the produce binary for benchmarking / testing.
+    dir: packages/producer/producer
+    sources:
+      - "*.go"
+      - "go.mod"
+    cmd: (test -d ../../../bin || mkdir ../../../bin) && go build -o ../../../bin/producer
