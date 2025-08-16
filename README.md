@@ -15,6 +15,7 @@ The architecture of the project is based on a producer / consumer model with the
 - **Dispatcher**: This acts as the central hub to receive tasks and run them on the workers. It is an HTTP server implemented in Go that receives tasks from a producer and dispatches them to workers based on the labels assigned to them.
 - **Worker**: This is a Python process that listens for tasks from the dispatcher on a queue.
 - **Redis**: This is used as the message broker to handle the communication between the dispatchers and workers. I chose this because of its simplicity and versatility, and this layer allows the dispatcher and worker to be decoupled and scaled independently.
+- **Log Collector**: This is a Go process that collects logs from the workers for later debugging purposes.
 
 ```mermaid
 graph TD;
@@ -36,7 +37,7 @@ packages/
 ├── dispatcher       # (GoLang) Component that dispatches tasks to workers
 ├── log-collector    # (GoLang) Component to collect logs from workers
 ├── worker           # (Python) Component that processes tasks
-└── producer         # (GoLang) Component to send tasks to the dispatcher to simulate traffic or run benchmarks
+└── producer         # (GoLang) Component to send tasks to the dispatcher to simulate traffic
 ```
 The dispatcher, log collector, and worker have `Dockerfile`s, and there is a `docker-compose.yml` file to spin up these services easily. The root directory also contains a `Taskfile.yml` file to run tasks using the [Task](https://taskfile.dev/) tool. Other files in the root folder are related to python setup and packaging.
 
