@@ -1,0 +1,69 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"time"
+
+	"github.com/redis/go-redis/v9"
+)
+
+type workerId string
+
+type taskRequest struct {
+	TaskID     string `json:"task_id"`
+	TaskType   string `json:"task_type"`
+	Label      string `json:"label"`
+	Parameters string `json:"parameters_json"`
+}
+
+func (wid workerId) getQueue() string {
+	return fmt.Sprintf("task-runners:%s:jobs", wid)
+}
+
+func (wid workerId) isAvailable(r *redis.Client, c context.Context) (bool, error) {
+	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
+	defer cancel()
+
+	a, err := r.SIsMember(ctx, availableWorkersKey, string(wid)).Result()
+	if err != nil {
+		slog.Error("Unable to check worker availability!", "error", err)
+		return false, err
+	}
+	return a, nil
+}
+
+func (wid workerId) sendTask(t *taskRequest, r *redis.Client, c context.Context) error {
+	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
+	defer cancel()
+
+	tJson, jsonErr := json.Marshal(t)
+	if jsonErr != nil {
+		slog.Error("JSOn serialization error", "error", jsonErr)
+		return jsonErr
+	}
+	_, err := r.LPush(ctx, wid.getQueue(), tJson).Result()
+	if err != nil {
+		slog.Error("Unable to send task!", "error", err)
+		return err
+	}
+	return nil
+}
+
+func stringToWidSlice(s []string) []workerId {
+	out := make([]workerId, len(s))
+	for i, e := range s {
+		out[i] = workerId(e)
+	}
+	return out
+}
+
+func widToStringSlice(s []workerId) []string {
+	out := make([]string, len(s))
+	for i, e := range s {
+		out[i] = string(e)
+	}
+	return out
+}
