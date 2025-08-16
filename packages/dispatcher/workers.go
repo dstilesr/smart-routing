@@ -19,6 +19,11 @@ type taskRequest struct {
 	Parameters string `json:"parameters_json"`
 }
 
+type taskChannelResult struct {
+	Success bool
+	Result  string
+}
+
 func (wid workerId) getQueue() string {
 	return fmt.Sprintf("task-runners:%s:jobs", wid)
 }
@@ -50,6 +55,28 @@ func (wid workerId) sendTask(t *taskRequest, r *redis.Client, c context.Context)
 		return err
 	}
 	return nil
+}
+
+// Run a task until completion or timeout, and return the result
+func (wid workerId) runTask(t *taskRequest, r *redis.Client, c context.Context) (string, error) {
+	err := wid.sendTask(t, r, c)
+	if err != nil {
+		return "", err
+	}
+
+	// Wait for task result
+	key := fmt.Sprintf("task-runners:results:%s", t.TaskID)
+	pubsub := r.Subscribe(c, key)
+	defer pubsub.Close()
+
+	ctx, cancel := context.WithTimeout(c, taskTimeoutSeconds*time.Second)
+	defer cancel()
+
+	m, err := pubsub.ReceiveMessage(ctx)
+	if err != nil {
+		return "", err
+	}
+	return m.Payload, nil
 }
 
 func stringToWidSlice(s []string) []workerId {
