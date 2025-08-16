@@ -4,3 +4,41 @@ services:
     container_name: "redis"
     ports:
       - "6379:6379"
+
+  dispatcher:
+    container_name: "dispatcher"
+    build:
+      context: packages/dispatcher
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    depends_on:
+      - redis
+    ports:
+      - "8080:8080"
+
+  log-handler:
+    container_name: "log-handler"
+    build:
+      context: packages/log-collector
+    environment:
+      LOG_FILE: "/app/logs/application.log"
+    ports:
+      - "8001:8001"
+    volumes:
+      - "./logs:/app/logs"
+
+  worker:
+    container_name: "worker"
+    build:
+      context: packages/worker
+    environment:
+      WORKER_REDIS_HOST: "redis"
+      LOG_COLLECTOR_ENABLED: "true"
+      LOG_COLLECTOR_HOST: "http://log-handler:8001"
+      LOG_COLLECTOR_LEVEL: "WARNING"
+    depends_on:
+      - redis
+      - log-handler
+    ports:
+      - "8000:8000"
