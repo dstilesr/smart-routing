@@ -3,8 +3,8 @@ FROM golang:1.25.0-bookworm as builder
 WORKDIR /app
 
 # Get dependencies
-COPY src/go.mod .
-COPY src/go.sum .
+COPY dispatcher/go.mod .
+COPY dispatcher/go.sum .
 RUN go mod download
 
 # Compile
