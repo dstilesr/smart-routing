@@ -30,4 +30,4 @@ tasks:
     sources:
       - "*.go"
       - "go.mod"
-    cmd: (test -d ../../../bin || mkdir ../../../bin) && go build -o ../../../bin/producer
+    cmd: (test -d ../../../bin || mkdir ../../../bin) && rm -f ../../../bin/producer && go build -o ../../../bin/producer
