@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -45,4 +46,18 @@ func selectWorkerQueue(t *taskRequest, r *redis.Client, c context.Context) (work
 func selectLabeledQueue(t *taskRequest, r *redis.Client, c context.Context) (workerId, error) {
 	// TODO: Implement this function
 	return workerId("all"), nil
+}
+
+// Get the list of workers that have a specific label
+func getWorkersWithLabel(label string, r *redis.Client, c context.Context) ([]workerId, error) {
+	key := fmt.Sprintf("task-runners:labels:%s:workers", label)
+	ctx, cancel := context.WithTimeout(c, 250*time.Millisecond)
+	defer cancel()
+
+	m, err := r.SMembers(ctx, key).Result()
+	if err != nil {
+		slog.Error("Unable to get workers with label!", "error", err, "label", label)
+		return []workerId{}, err
+	}
+	return stringToWidSlice(m), nil
 }
