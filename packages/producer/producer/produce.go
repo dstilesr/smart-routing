@@ -41,7 +41,7 @@ func (p *producer) createTaskRequest() *taskRequest {
 		ReturnResult: p.Rng.Intn(2) == 0,
 		Label:        fmt.Sprintf("label-%d", p.Rng.Intn(numLabels)),
 		Parameters:   "{}",
-		TaskType:     fmt.Sprintf("sample_task_%d", p.Rng.Intn(2)),
+		TaskType:     fmt.Sprintf("sample_task_%d", p.Rng.Intn(2)+1),
 	}
 
 	return &tr

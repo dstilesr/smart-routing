@@ -29,7 +29,6 @@ services:
       - "./logs:/app/logs"
 
   worker:
-    container_name: "worker"
     build:
       context: packages/worker
     environment:
@@ -40,5 +39,3 @@ services:
     depends_on:
       - redis
       - log-handler
-    ports:
-      - "8000:8000"

@@ -135,7 +135,7 @@ class TaskRunner(ContextManager):
                 break
 
             except Exception as e:
-                logger.error("Error while listening for tasks: {}", e)
+                logger.error("Error while listening for tasks: [{}.{}]{}", type(e).__module__, type(e).__name__, e)
                 break
 
     def add_task_function(
