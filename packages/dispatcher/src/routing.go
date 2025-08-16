@@ -33,8 +33,8 @@ func getRunningWorkerIds(r *redis.Client, c context.Context) ([]workerId, error)
 }
 
 // Select a worker to process the given task request.
-func selectWorkerQueue(t *taskRequest, r *redis.Client, c context.Context, random bool) (workerId, error) {
-	if random {
+func selectWorkerQueue(t *taskRequest, r *redis.Client, c context.Context) (workerId, error) {
+	if randomDispatch {
 		// Send to common queue
 		return workerId("all"), nil
 	}
