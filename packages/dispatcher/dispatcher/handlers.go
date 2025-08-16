@@ -144,7 +144,7 @@ func runTaskAPI(w http.ResponseWriter, r *http.Request, rd *redis.Client) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	_, writeErr := w.Write([]byte(result))
+	_, writeErr := w.Write(getResponseJSON(result))
 	if writeErr != nil {
 		slog.Error("Error writing response", "error", writeErr)
 	}

@@ -1,3 +1,6 @@
+/*
+The dispatcher service is responsible for receiving tasks and dispatching them to the worker pool.
+*/
 package main
 
 import (
