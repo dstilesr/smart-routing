@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -44,7 +45,31 @@ func selectWorkerQueue(t *taskRequest, r *redis.Client, c context.Context) (work
 
 // Select a worker based on the task label and worker labels
 func selectLabeledQueue(t *taskRequest, r *redis.Client, c context.Context) (workerId, error) {
-	// TODO: Implement this function
+	labeled, err := getWorkersWithLabel(t.Label, r, c)
+	if err != nil {
+		slog.Error("Error getting workers with label", "error", err, "label", t.Label)
+		return "", err
+	} else if len(labeled) == 0 {
+		slog.Warn("No workers found with label", "label", t.Label)
+		return workerId("all"), nil
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(labeled))
+	cn := make(chan workerId, len(labeled))
+
+	for _, wid := range labeled {
+		go wid.isAvailableAsync(r, c, cn, &wg)
+	}
+	wg.Wait()
+	close(cn)
+	select {
+	case w := <-cn:
+		return w, nil
+	default:
+		slog.Warn("No available workers found with label", "label", t.Label)
+	}
+
 	return workerId("all"), nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -24,6 +25,19 @@ func (wid workerId) getQueue() string {
 	return fmt.Sprintf("task-runners:%s:jobs", wid)
 }
 
+// Check if a worker is available and if so, send the worker Id to the output channel.
+func (wid workerId) isAvailableAsync(r *redis.Client, c context.Context, out chan<- workerId, wg *sync.WaitGroup) {
+	defer wg.Done()
+	a, err := wid.isAvailable(r, c)
+	if err != nil {
+		slog.Error("Could not check worker availability", "error", err, "workerId", wid)
+		return
+	} else if a {
+		out <- wid
+	}
+}
+
+// Check if the worker is available by checking if it is in the available workers set
 func (wid workerId) isAvailable(r *redis.Client, c context.Context) (bool, error) {
 	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
 	defer cancel()
