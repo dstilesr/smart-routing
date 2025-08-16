@@ -30,5 +30,5 @@ func main() {
 		func(w http.ResponseWriter, r *http.Request) {
 			runTaskAPI(w, r, client)
 		})
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%s", os.Getenv("PORT")), nil))
 }

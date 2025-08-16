@@ -65,7 +65,7 @@ func main() {
 	)
 
 	// Start HTTP server
-	addr := fmt.Sprintf(":%s", os.Getenv("PORT"))
+	addr := fmt.Sprintf("0.0.0.0:%s", os.Getenv("PORT"))
 	slog.Info("Starting server", "address", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
