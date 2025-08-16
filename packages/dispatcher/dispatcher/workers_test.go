@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
+	"time"
 )
 
 // Test worker availability checking functionality.
@@ -68,5 +70,39 @@ func TestSendTask(t *testing.T) {
 	ntr := taskRequest{}
 	if err := json.Unmarshal([]byte(res), &ntr); err != nil {
 		t.Error("Failed to unmarshal task from worker queue:", err)
+	}
+}
+
+// Test running a task until completion
+func TestRunTaskSync(t *testing.T) {
+	r, c := mockRedis(true)
+	defer r.Close()
+
+	tr := taskRequest{
+		TaskID:       "test-task-1",
+		Label:        "label-1",
+		TaskType:     "test-task",
+		Parameters:   "{}",
+		ReturnResult: true,
+	}
+	wid := workerId("work1")
+	rspChan := fmt.Sprintf("task-runners:results:%s", tr.TaskID)
+	msg := "Task completed successfully - TEST"
+
+	// dispatch to simulate worker responding
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		_, err := r.Publish(c, rspChan, msg).Result()
+		if err != nil {
+			t.Error("Failed to publish task result:", err)
+		}
+	}()
+
+	rsp, err := wid.runTask(&tr, r, c)
+	if err != nil {
+		t.Fatalf("Error running task: %v", err)
+	}
+	if rsp != msg {
+		t.Errorf("Expected task result to be '%s', got '%s'", msg, rsp)
 	}
 }
