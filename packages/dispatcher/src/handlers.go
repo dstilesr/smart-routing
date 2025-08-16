@@ -20,6 +20,16 @@ func getResponseJSON(m string) []byte {
 	return b
 }
 
+// Parse a task request from the HTTP request body.
+func taskFromRequest(r *http.Request) (*taskRequest, error) {
+	var t taskRequest
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		slog.Error("Error decoding request body", "error", err)
+		return nil, err
+	}
+	return &t, nil
+}
+
 // API method to check the health of the service
 func healthCheckAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -70,15 +80,13 @@ func dispatchTaskAPI(w http.ResponseWriter, r *http.Request, rd *redis.Client) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	var t taskRequest
-	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+	t, err := taskFromRequest(r)
+	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		slog.Error("Error decoding request body", "error", err)
 		return
 	}
 
-	wid, selectErr := selectWorkerQueue(&t, rd, r.Context(), true)
+	wid, selectErr := selectWorkerQueue(t, rd, r.Context())
 
 	if selectErr != nil {
 		http.Error(w, "Error selecting worker", http.StatusInternalServerError)
@@ -86,7 +94,7 @@ func dispatchTaskAPI(w http.ResponseWriter, r *http.Request, rd *redis.Client) {
 		return
 	}
 
-	if sendErr := wid.sendTask(&t, rd, r.Context()); sendErr != nil {
+	if sendErr := wid.sendTask(t, rd, r.Context()); sendErr != nil {
 		http.Error(w, "Error sending task to worker", http.StatusInternalServerError)
 		slog.Error("Error sending task to worker", "error", sendErr)
 		return
@@ -106,13 +114,12 @@ func runTaskAPI(w http.ResponseWriter, r *http.Request, rd *redis.Client) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	var t taskRequest
-	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+	t, err := taskFromRequest(r)
+	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		slog.Error("Error decoding request body", "error", err)
 		return
 	}
+
 	if !t.ReturnResult {
 		http.Error(
 			w,
@@ -122,7 +129,7 @@ func runTaskAPI(w http.ResponseWriter, r *http.Request, rd *redis.Client) {
 		return
 	}
 
-	wid, selectErr := selectWorkerQueue(&t, rd, r.Context(), true)
+	wid, selectErr := selectWorkerQueue(t, rd, r.Context())
 
 	if selectErr != nil {
 		http.Error(w, "Error selecting worker", http.StatusInternalServerError)
@@ -130,7 +137,7 @@ func runTaskAPI(w http.ResponseWriter, r *http.Request, rd *redis.Client) {
 		return
 	}
 
-	result, err := wid.runTask(&t, rd, r.Context())
+	result, err := wid.runTask(t, rd, r.Context())
 	if err != nil {
 		http.Error(w, "Eror when running task", http.StatusInternalServerError)
 		slog.Error("Error when running task", "error", err)
