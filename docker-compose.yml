@@ -22,7 +22,7 @@ services:
     build:
       context: packages/log-collector
     environment:
-      LOG_FILE: "/app/logs/application.log"
+      LOG_FILE: "${LOG_FILE:-/app/logs/collector.log}"
     ports:
       - "8001:8001"
     volumes:

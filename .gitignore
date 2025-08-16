@@ -55,6 +55,7 @@ _data
 
 # logs
 **/*.log
+logs
 
 # Binaries
 bin/

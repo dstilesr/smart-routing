@@ -10,18 +10,33 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 )
 
 type response struct {
 	Message string `json:"message"`
 }
 
-func main() {
+// Check if parent directory exists, if not, create it
+func chekParentDir(path string) {
+	dir := filepath.Dir(path)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		slog.Error("Unable to create log directory!", "error", err)
+		os.Exit(1)
+	}
+}
 
-	outFile, err := os.OpenFile(os.Getenv("LOG_FILE"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0655)
+func main() {
+	logsPath := os.Getenv("LOG_FILE")
+	if logsPath == "" {
+		logsPath = "collected-logs.log"
+	}
+	chekParentDir(logsPath)
+	outFile, err := os.OpenFile(logsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0655)
 	if err != nil {
 		slog.Error("Unable to open log file!", "error", err)
-		return
+		os.Exit(1)
 	}
 	defer outFile.Close()
 	send := make(chan string)

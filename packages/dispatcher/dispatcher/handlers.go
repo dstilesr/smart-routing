@@ -139,7 +139,7 @@ func runTaskAPI(w http.ResponseWriter, r *http.Request, rd *redis.Client) {
 
 	result, err := wid.runTask(t, rd, r.Context())
 	if err != nil {
-		http.Error(w, "Eror when running task", http.StatusInternalServerError)
+		http.Error(w, "Error when running task", http.StatusInternalServerError)
 		slog.Error("Error when running task", "error", err)
 		return
 	}

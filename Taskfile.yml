@@ -16,9 +16,24 @@ tasks:
       - task: test-worker
       - task: test-dispatcher
 
+  start-docker:
+    desc: Start the docker services (dispatcher, log-handler, worker, and redis)
+    cmd: docker compose up -d --build --scale "worker={{.NUM_WORKERS}}"
+    env:
+      LOG_FILE: "/app/logs/{{.RUN_ID}}/collector.log"
+    requires:
+      vars:
+        - "RUN_ID"
+        - "NUM_WORKERS"
+
   start:
     desc: Start the services (dispatcher, log-handler, worker, and redis)
-    cmd: docker compose up -d --build {{.CLI_ARGS}}
+    cmds:
+      - task: start-docker
+        vars:
+          NUM_WORKERS: 1
+          RUN_ID:
+            sh: date "+%Y-%m-%d-%H%M"
 
   stop:
     desc: Stop the services
@@ -30,4 +45,35 @@ tasks:
     sources:
       - "*.go"
       - "go.mod"
-    cmd: (test -d ../../../bin || mkdir ../../../bin) && rm -f ../../../bin/producer && go build -o ../../../bin/producer
+    cmds:
+      - (test -d ../../../bin || mkdir ../../../bin)
+      - rm -f ../../../bin/producer
+      - go build -o ../../../bin/producer
+
+  run-benchmark:
+    desc: Start the services and run the producer to benchmark the system.
+    vars:
+      RUN_ID:
+        sh: date "+%Y-%m-%d-%H%M"
+      PRODUCER_LOG_FILE: "./logs/{{.RUN_ID}}/producer.log"
+    cmds:
+      - mkdir -p ./logs/{{.RUN_ID}}
+      - task: start-docker
+        vars:
+          RUN_ID: "{{.RUN_ID}}"
+          NUM_WORKERS: "{{.NUM_WORKERS}}"
+
+      - task: build-producer
+
+      # Give some time for startup
+      - sleep 10
+
+      # Run the producer - fix the log file and settings file for easy reference
+      - |
+        DISPATCHER_URL=http://localhost:8080 \
+                      ./bin/producer \
+                        --log-file={{.PRODUCER_LOG_FILE}} \
+                        --settings=./logs/{{.RUN_ID}}/settings.json \
+                        {{.CLI_ARGS}}
+
+      - task: stop

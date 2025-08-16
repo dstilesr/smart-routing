@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+type produceSettings struct {
+	NumLabels         int     `json:"num_labels"`
+	NumProducers      int     `json:"num_producers"`
+	LogsPath          string  `json:"logs_path"`
+	TotalRequests     int     `json:"total_requests"`
+	WaitAvgSeconds    float64 `json:"wait_avg_seconds"`
+	WaitStdDevSeconds float64 `json:"wait_std_dev_seconds"`
+}
+
 type producer struct {
 	Rng *rand.Rand
 }
@@ -96,4 +105,30 @@ func (p *producer) run(sig <-chan int, wg *sync.WaitGroup) {
 		}
 		time.Sleep(time.Duration(waitMilliSeconds) * time.Millisecond)
 	}
+}
+
+// Save run settings to JSON for later reference
+func saveSettings() {
+	settings := produceSettings{
+		NumLabels:         numLabels,
+		NumProducers:      numProducers,
+		LogsPath:          logsPath,
+		TotalRequests:     totalRequests,
+		WaitAvgSeconds:    waitAvgSeconds,
+		WaitStdDevSeconds: waitStdDevSeconds,
+	}
+
+	file, err := os.Create(settingsPath)
+	if err != nil {
+		logger.Error("Error creating settings file", "error", err)
+		return
+	}
+	defer file.Close()
+
+	err = json.NewEncoder(file).Encode(&settings)
+	if err != nil {
+		logger.Error("Error marshalling settings to JSON", "error", err)
+		return
+	}
+	logger.Info("Settings saved successfully", "path", settingsPath)
 }
