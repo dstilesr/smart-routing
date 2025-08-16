@@ -1,3 +1,4 @@
+import time
 import redis
 from uuid import uuid4
 from loguru import logger
@@ -158,6 +159,7 @@ class TaskRunner(ContextManager):
             @wraps(func)
             def wrapper(lh: LabelHandler, task: TaskSchema):
                 result = None
+                start = time.perf_counter()
                 try:
                     self.update_availability(False)
                     result = func(lh, task)
@@ -176,6 +178,14 @@ class TaskRunner(ContextManager):
                         f"task-runners:results:{task.task_id}",
                         result,
                     )
+
+                end = time.perf_counter()
+                logger.info(
+                    "Task [{}] from worker [{}] completed in {:.6f} seconds",
+                    task.task_id,
+                    self.uuid,
+                    end - start,
+                )
                 return result
 
             self.__task_handlers[task_type] = wrapper
