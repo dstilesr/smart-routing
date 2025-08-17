@@ -20,12 +20,12 @@ def sample_task_1(lh: LabelHandler, task: TaskSchema) -> str:
     :return: A string indicating the task completion.
     """
     logger.info("Executing sample_task_1 with task_id: {}", task.task_id)
-    acquire_label(lh, task.label)
+    acquire_label(lh, task.label, task.task_id, lh.runner_uuid)
 
     time.sleep(
         max(0.1, random.normalvariate(1.0, 0.25))
     )  # Simulate task processing time
-    logger.info("Completed sample_task_1 with task_id: {}", task.task_id)
+    logger.debug("Completed sample_task_1 with task_id: {}", task.task_id)
     return f"Task {task.task_id} completed by sample_task_1"
 
 
@@ -37,11 +37,11 @@ def sample_task_2(lh: LabelHandler, task: TaskSchema) -> str:
     :param task: TaskSchema instance containing task details.
     :return: A string indicating the task completion.
     """
-    logger.info("Executing sample_task_2 with task_id: {}", task.task_id)
-    acquire_label(lh, task.label)
+    logger.debug("Executing sample_task_2 with task_id: {}", task.task_id)
+    acquire_label(lh, task.label, task.task_id, lh.runner_uuid)
 
     time.sleep(
         max(0.5, random.normalvariate(5.0, 1.0))
     )  # Simulate somewhat longer task processing time
-    logger.info("Completed sample_task_2 with task_id: {}", task.task_id)
+    logger.debug("Completed sample_task_2 with task_id: {}", task.task_id)
     return f"Task {task.task_id} completed by sample_task_2"

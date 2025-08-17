@@ -213,10 +213,8 @@ class TaskRunner(ContextManager):
                     )
 
                 end = time.perf_counter()
-                logger.info(
-                    "Task [{}] from worker [{}] completed in {:.6f} seconds",
-                    task.task_id,
-                    self.uuid,
+                logger.bind(task_id=task.task_id, worker_id=self.uuid).info(
+                    "Task completed in {:.6f} seconds",
                     end - start,
                 )
                 return result

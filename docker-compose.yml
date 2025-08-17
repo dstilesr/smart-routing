@@ -35,7 +35,7 @@ services:
       WORKER_REDIS_HOST: "redis"
       LOG_COLLECTOR_ENABLED: "true"
       LOG_COLLECTOR_HOST: "http://log-handler:8001"
-      LOG_COLLECTOR_LEVEL: "WARNING"
+      LOG_COLLECTOR_LEVEL: "INFO"
     depends_on:
       - redis
       - log-handler

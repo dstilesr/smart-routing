@@ -13,6 +13,6 @@ if __name__ == "__main__":
     logs.setup_logs()
     logger.info("Starting Worker...")
     with tasks.get_runner() as runner:
-        logger.info("Worker running...")
+        logger.debug("Worker running...")
         for _ in runner.listen():
             time.sleep(0.1)
