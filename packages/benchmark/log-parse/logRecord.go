@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"regexp"
 	"strconv"
 )
 
@@ -10,6 +11,17 @@ type logRecord struct {
 	Level   string `json:"level"`
 	Message string `json:"msg"`
 	Time    string `json:"time"`
+}
+
+var labelMiss *regexp.Regexp
+var taskCompleted *regexp.Regexp
+var requestCompleted *regexp.Regexp
+
+// Compile the regular expressions
+func compileRegex() {
+	labelMiss = regexp.MustCompile("LABEL MISS:\\s*<([^<>]+)>")
+	taskCompleted = regexp.MustCompile("Task completed in\\s+(\\d+\\.?\\d*)\\s+seconds")
+	requestCompleted = regexp.MustCompile("Request completed \\[(\\d+)]\\[([\\w\\-/]+)]")
 }
 
 // Extract the task runtime if the message indicates a task completion
@@ -35,4 +47,19 @@ func (lr *logRecord) isLabelMiss() bool {
 	}
 	matches := labelMiss.FindStringSubmatch(lr.Message)
 	return len(matches) >= 2
+}
+
+// Get the result of a request from a producer log record return the status code of the response
+// and the endpoint that was called. Returns -1 if the message does not correspond to a request result.
+func (lr *logRecord) requestResult() (int, string) {
+	matches := requestCompleted.FindStringSubmatch(lr.Message)
+	if len(matches) < 2 {
+		return -1, ""
+	}
+	statusCode, err := strconv.Atoi(matches[1])
+	if err != nil {
+		slog.Error("Failed to parse request status code", "message", lr.Message, "error", err)
+		return -1, ""
+	}
+	return statusCode, matches[2]
 }

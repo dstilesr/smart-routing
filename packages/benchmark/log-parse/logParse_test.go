@@ -48,6 +48,33 @@ func TestGetTaskRuntime(t *testing.T) {
 	}
 }
 
+func TestGetRequestResult(t *testing.T) {
+	lr := &logRecord{
+		Level:   "info",
+		Message: "Request completed [202][send-task]",
+		Time:    "2020-01-01T12:00:00Z",
+	}
+	statusCode, endpoint := lr.requestResult()
+	if statusCode != 202 {
+		t.Errorf("Expected status code 202, got %d", statusCode)
+	}
+	if endpoint != "send-task" {
+		t.Errorf("Expected endpoint 'send-task', got '%s'", endpoint)
+	}
+
+	lr.Message = "This is a random message [987][run-task]"
+	statusCode, endpoint = lr.requestResult()
+	if statusCode != -1 {
+		t.Errorf("Should not parse this message")
+	}
+
+	lr.Message = "Request completed [BAD][run-task]"
+	statusCode, endpoint = lr.requestResult()
+	if statusCode != -1 {
+		t.Errorf("Should not parse this message")
+	}
+}
+
 // Test that logs can be read and parsed from a sample file
 func TestScanLogFile(t *testing.T) {
 	fp, err := filepath.Abs(".")

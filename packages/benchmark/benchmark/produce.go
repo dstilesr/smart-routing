@@ -56,7 +56,7 @@ func (p *producer) createTaskRequest() *taskRequest {
 	return &tr
 }
 
-// Run a request to the dispatcher
+// Run a single request to the dispatcher
 func (p *producer) runRequest() {
 	tr := p.createTaskRequest()
 	var ep string
@@ -84,11 +84,9 @@ func (p *producer) runRequest() {
 		return
 	}
 	logger.Info(
-		"Request completed",
-		"status", rsp.StatusCode,
+		fmt.Sprintf("Request completed [%d][%s]", rsp.StatusCode, ep),
 		"response", string(c),
 		"task_id", tr.TaskID,
-		"endpoint", ep,
 	)
 }
 

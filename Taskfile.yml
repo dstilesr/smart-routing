@@ -89,7 +89,7 @@ tasks:
       # Run the producer - fix the log file and settings file for easy reference
       - |
         DISPATCHER_URL=http://localhost:8080 \
-                      ./bin/producer \
+                      ./bin/benchmark \
                         --log-file={{.PRODUCER_LOG_FILE}} \
                         --settings=./logs/{{.RUN_ID}}/settings.json \
                         {{.CLI_ARGS}}

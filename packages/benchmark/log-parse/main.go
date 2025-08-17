@@ -33,4 +33,7 @@ func main() {
 
 	wrkSummary := processWorkerLogs(wrkLogs)
 	wrkSummary.printSummary()
+
+	prodSummary := processProducerLogs(prodLogs)
+	prodSummary.printSummary()
 }
