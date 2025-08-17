@@ -9,23 +9,25 @@ import (
 	"regexp"
 )
 
-// A record parsed from the log file.
-type logRecord struct {
-	Level   string `json:"level"`
-	Message string `json:"msg"`
-	Time    string `json:"time"`
+// Interface fo results of processing a file that can print a summary.
+type logSummary interface {
+	printSummary()
 }
 
 // Summary of processing logs from the workers
 type workerLogSummary struct {
-	labelMisses int
+	labelMisses   int
+	totalRuntime  float64
+	totalComplete int
 }
 
 var labelMiss *regexp.Regexp
+var taskCompleted *regexp.Regexp
 
 // Compile the regular expressions
 func compileRegex() {
 	labelMiss = regexp.MustCompile("LABEL MISS:\\s*<([^<>]+)>")
+	taskCompleted = regexp.MustCompile("Task completed in\\s+(\\d+\\.?\\d*)\\s+seconds")
 }
 
 // Iterate over lines of a log file and send log records to the output channel.
@@ -54,19 +56,6 @@ func scanLogFile(fp string, out chan<- *logRecord) {
 	slog.Info("Completed scanning log file", "file", fp, "records_processed", processed)
 }
 
-// Identify if a log has a record of a label miss from a worker
-func (lr *logRecord) isLabelMiss() bool {
-	if labelMiss == nil {
-		slog.Error("Label miss regex is not compiled")
-		panic("Label miss regex is not compiled")
-	}
-	matches := labelMiss.FindStringSubmatch(lr.Message)
-	if len(matches) < 2 {
-		return false
-	}
-	return true
-}
-
 // Process logs from a worker log file and return a summary
 func processWorkerLogs(fp string) *workerLogSummary {
 	recs := make(chan *logRecord)
@@ -75,6 +64,9 @@ func processWorkerLogs(fp string) *workerLogSummary {
 	for r := range recs {
 		if r.isLabelMiss() {
 			summary.labelMisses++
+		} else if r.taskRuntime() > 0.0 {
+			summary.totalComplete++
+			summary.totalRuntime += r.taskRuntime()
 		}
 	}
 	if summary.labelMisses == 0 {
@@ -84,7 +76,12 @@ func processWorkerLogs(fp string) *workerLogSummary {
 }
 
 // Print summary of logs analysis
-func printSummary(s *workerLogSummary) {
+func (s *workerLogSummary) printSummary() {
 	fmt.Println("Worker Log Summary:")
 	fmt.Printf("  Total Label Misses: %d\n", s.labelMisses)
+	fmt.Printf("  Tasks Completed: %d\n", s.totalComplete)
+	if s.totalComplete > 0 {
+		avgRuntime := s.totalRuntime / float64(s.totalComplete)
+		fmt.Printf("  Average Task Runtime: %.4f seconds\n", avgRuntime)
+	}
 }

@@ -22,7 +22,7 @@ type produceSettings struct {
 }
 
 type producer struct {
-	Rng *rand.Rand
+	rng *rand.Rand
 }
 
 type taskRequest struct {
@@ -37,20 +37,20 @@ type taskRequest struct {
 func newProducer() *producer {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return &producer{
-		Rng: rng,
+		rng: rng,
 	}
 }
 
 // Create a task request with some random parameters
 func (p *producer) createTaskRequest() *taskRequest {
-	taskId := fmt.Sprintf("%d-%d", p.Rng.Intn(1000000), p.Rng.Intn(1000000))
+	taskId := fmt.Sprintf("%d-%d", p.rng.Intn(1000000), p.rng.Intn(1000000))
 
 	tr := taskRequest{
 		TaskID:       taskId,
-		ReturnResult: p.Rng.Intn(2) == 0,
-		Label:        fmt.Sprintf("label-%d", p.Rng.Intn(numLabels)),
+		ReturnResult: p.rng.Intn(2) == 0,
+		Label:        fmt.Sprintf("label-%d", p.rng.Intn(numLabels)),
 		Parameters:   "{}",
-		TaskType:     fmt.Sprintf("sample_task_%d", p.Rng.Intn(2)+1),
+		TaskType:     fmt.Sprintf("sample_task_%d", p.rng.Intn(2)+1),
 	}
 
 	return &tr
@@ -98,7 +98,7 @@ func (p *producer) run(sig <-chan int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for range sig {
 		p.runRequest()
-		waitTime := (p.Rng.NormFloat64()*waitStdDevSeconds + waitAvgSeconds) * 1000
+		waitTime := (p.rng.NormFloat64()*waitStdDevSeconds + waitAvgSeconds) * 1000
 		waitMilliSeconds := int64(waitTime)
 		if waitMilliSeconds < minWaitMilliseconds {
 			waitMilliSeconds = minWaitMilliseconds

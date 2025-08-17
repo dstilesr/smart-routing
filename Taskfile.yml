@@ -56,7 +56,7 @@ tasks:
       - rm -f ../../../bin/benchmark
       - go build -o ../../../bin/benchmark
 
-  build-log-processor:
+  build-log-parser:
     desc: Build the produce binary for benchmarking / testing.
     dir: packages/benchmark/log-parse
     sources:
@@ -81,7 +81,7 @@ tasks:
           NUM_WORKERS: "{{.NUM_WORKERS}}"
 
       - task: build-producer
-      - task: build-log-processor
+      - task: build-log-parser
 
       # Give some time for startup
       - sleep 10
@@ -95,6 +95,6 @@ tasks:
                         {{.CLI_ARGS}}
 
       # Give some time for pending tasks to complete
-      - sleep 60
+      - sleep 90
 
       - task: stop

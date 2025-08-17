@@ -32,5 +32,5 @@ func main() {
 	}
 
 	wrkSummary := processWorkerLogs(wrkLogs)
-	printSummary(wrkSummary)
+	wrkSummary.printSummary()
 }

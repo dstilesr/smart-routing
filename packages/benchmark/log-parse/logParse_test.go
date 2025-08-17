@@ -28,6 +28,26 @@ func TestLogRecordIsLabelMiss(t *testing.T) {
 	}
 }
 
+func TestGetTaskRuntime(t *testing.T) {
+	lr := &logRecord{
+		Level:   "info",
+		Message: "Task completed in 4.864089 seconds",
+		Time:    "2023-10-01T12:00:00Z",
+	}
+
+	runtime := lr.taskRuntime()
+	if !(runtime > 4.864088 && runtime < 4.864090) {
+		// Allow a small margin of error due to floating point precision
+		t.Errorf("Expected task runtime to be 4.864089, got %f", runtime)
+	}
+
+	lr.Message = "This is a random message 998.76"
+	runtime = lr.taskRuntime()
+	if runtime != -1.0 {
+		t.Errorf("Expected task runtime to be -1.0, got %f", runtime)
+	}
+}
+
 // Test that logs can be read and parsed from a sample file
 func TestScanLogFile(t *testing.T) {
 	fp, err := filepath.Abs(".")
