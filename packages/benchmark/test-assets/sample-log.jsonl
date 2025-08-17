@@ -1,0 +1,4 @@
+{"time": "2025-08-17T00:54:47.194322+00:00", "level": "WARNING", "msg": "LABEL MISS: <label-3>", "task_id": "task-1", "worker_id": "worker1"}
+{"time": "2025-08-17T00:54:51.057375+00:00", "level": "WARNING", "msg": "LABEL MISS: <label-2>", "task_id": "task-1", "worker_id": "worker1"}
+{"time":"2025-08-16T19:55:44.805717452-05:00","level":"INFO","msg":"Request completed","status":500,"response":"Error when running task\n","task_id":"543986-637112","endpoint":"run-task"}
+{"time":"2025-08-16T19:55:45.415644867-05:00","level":"INFO","msg":"Settings saved successfully","path":"./logs/sample-run-id/settings.json"}

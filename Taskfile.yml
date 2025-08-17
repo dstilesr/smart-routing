@@ -10,11 +10,17 @@ tasks:
     dir: packages/dispatcher/dispatcher
     cmd: go test
 
+  test-log-parsing:
+    desc: Run unit tests for the log parsing code.
+    dir: packages/benchmark/log-parse
+    cmd: go test
+
   unit-tests:
     desc: Run unit tests for all components.
     cmds:
       - task: test-worker
       - task: test-dispatcher
+      - task: test-log-parsing
 
   start-docker:
     desc: Start the docker services (dispatcher, log-handler, worker, and redis)
@@ -41,14 +47,25 @@ tasks:
 
   build-producer:
     desc: Build the produce binary for benchmarking / testing.
-    dir: packages/producer/producer
+    dir: packages/benchmark/benchmark
     sources:
       - "*.go"
       - "go.mod"
     cmds:
       - (test -d ../../../bin || mkdir ../../../bin)
-      - rm -f ../../../bin/producer
-      - go build -o ../../../bin/producer
+      - rm -f ../../../bin/benchmark
+      - go build -o ../../../bin/benchmark
+
+  build-log-processor:
+    desc: Build the produce binary for benchmarking / testing.
+    dir: packages/benchmark/log-parse
+    sources:
+      - "*.go"
+      - "go.mod"
+    cmds:
+      - (test -d ../../../bin || mkdir ../../../bin)
+      - rm -f ../../../bin/log-parse
+      - go build -o ../../../bin/log-parse
 
   run-benchmark:
     desc: Start the services and run the producer to benchmark the system.
@@ -64,6 +81,7 @@ tasks:
           NUM_WORKERS: "{{.NUM_WORKERS}}"
 
       - task: build-producer
+      - task: build-log-processor
 
       # Give some time for startup
       - sleep 10

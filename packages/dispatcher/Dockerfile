@@ -20,4 +20,4 @@ WORKDIR /app
 COPY --from=builder /app/dispatcher .
 
 EXPOSE ${PORT}
-CMD ["./dispatcher"]
+ENTRYPOINT ["/app/dispatcher"]

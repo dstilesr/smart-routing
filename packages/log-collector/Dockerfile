@@ -20,4 +20,4 @@ RUN mkdir -p /app/logs
 COPY --from=builder /app/logHandler .
 
 EXPOSE ${PORT}
-CMD ["./logHandler"]
+ENTRYPOINT ["/app/logHandler"]
