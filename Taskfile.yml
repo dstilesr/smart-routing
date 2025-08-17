@@ -25,8 +25,11 @@ tasks:
   start-docker:
     desc: Start the docker services (dispatcher, log-handler, worker, and redis)
     cmd: docker compose up -d --build --scale "worker={{.NUM_WORKERS}}"
+    vars:
+      RANDOM_DISPATCH: "{{.RANDOM_DISPATCH | default false}}"
     env:
       LOG_FILE: "/app/logs/{{.RUN_ID}}/collector.log"
+      DISPATCH_CMD: "--random-dispatch={{.RANDOM_DISPATCH}}"
     requires:
       vars:
         - "RUN_ID"
@@ -73,12 +76,14 @@ tasks:
       RUN_ID:
         sh: date "+%Y-%m-%d-%H%M"
       PRODUCER_LOG_FILE: "./logs/{{.RUN_ID}}/producer.log"
+      RANDOM_DISPATCH: "{{.RANDOM_DISPATCH | default false}}"
     cmds:
       - mkdir -p ./logs/{{.RUN_ID}}
       - task: start-docker
         vars:
           RUN_ID: "{{.RUN_ID}}"
           NUM_WORKERS: "{{.NUM_WORKERS}}"
+          RANDOM_DISPATCH: "{{.RANDOM_DISPATCH}}"
 
       - task: build-producer
       - task: build-log-parser

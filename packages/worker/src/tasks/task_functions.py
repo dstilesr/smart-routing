@@ -23,7 +23,7 @@ def sample_task_1(lh: LabelHandler, task: TaskSchema) -> str:
     acquire_label(lh, task.label, task.task_id, lh.runner_uuid)
 
     time.sleep(
-        max(0.1, random.normalvariate(1.0, 0.25))
+        max(0.1, random.normalvariate(1.0, 0.5))
     )  # Simulate task processing time
     logger.debug("Completed sample_task_1 with task_id: {}", task.task_id)
     return f"Task {task.task_id} completed by sample_task_1"

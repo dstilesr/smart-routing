@@ -20,6 +20,9 @@ var randomDispatch bool
 // Setup CLI flags
 func flagsSetup() {
 	flag.BoolVar(&randomDispatch, "random-dispatch", false, "Use random dispatching instead of 'smart' dispatching")
+	if randomDispatch {
+		slog.Warn("Using Random Dispatch Method!")
+	}
 }
 
 func main() {

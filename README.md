@@ -37,7 +37,7 @@ packages/
 ├── dispatcher       # (GoLang) Component that dispatches tasks to workers
 ├── log-collector    # (GoLang) Component to collect logs from workers
 ├── worker           # (Python) Component that processes tasks
-└── producer         # (GoLang) Component to send tasks to the dispatcher to simulate traffic
+└── benchmark        # (GoLang) Components to run benchmarks with simulated traffic
 ```
 The dispatcher, log collector, and worker have `Dockerfile`s, and there is a `docker-compose.yml` file to spin up these services easily. The root directory also contains a `Taskfile.yml` file to run tasks using the [Task](https://taskfile.dev/) tool. Other files in the root folder are related to python setup and packaging.
 
@@ -50,3 +50,28 @@ The `Taskfile.yml` contains several useful tasks to help you get started. Some o
 - `task start`: Start the services using Docker Compose.
 - `task stop`: Stop the services using Docker Compose.
 - `task build-producer`: Build the producer component. The binary executable will be stored in the `bin` folder.
+
+## Running Benchmarks
+
+### Instructions
+In order to run benchmarks on the service, you can use the `task run-benchmark` command. This will build and spin up the services, then run a number of requests with a given number of concurrent workers. Finally, it will parse the log files produced to show some summary statistics, and shut down the services.
+
+You can run the benchmarks with the following command (showing some of the possible options):
+```bash
+# Options:
+# 'NUM_WORKERS': Number of workers to run in the pool: 2
+# 'RANDOM_DISPATCH': Set to true to send all tasks to the common queue
+# 'requests': Number of requests to send: 10
+# 'producers': Number of clients that will send requests concurrently: 2
+# 'wait-avg': Avg wait time each client waits between requests (seconds): 1.0
+# 'wait-stddev': Std deviation of the wait time between requests: 0.5
+# 'labels': Number of different labels to include in the requests: 2
+task run-benchmark NUM_WORKERS=2 RANDOM_DISPATCH=false -- \
+    --requests 10 \
+    --producers 2 \
+    --wait-avg 1.0 \
+    --wait-stddev 0.5 \
+    --labels 2
+```
+
+### Some Results
