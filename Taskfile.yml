@@ -25,15 +25,14 @@ tasks:
   start-docker:
     desc: Start the docker services (dispatcher, log-handler, worker, and redis)
     cmd: docker compose up -d --build --scale "worker={{.NUM_WORKERS}}"
-    vars:
-      RANDOM_DISPATCH: "{{.RANDOM_DISPATCH | default false}}"
     env:
       LOG_FILE: "/app/logs/{{.RUN_ID}}/collector.log"
-      DISPATCH_CMD: "--random-dispatch={{.RANDOM_DISPATCH}}"
+      RANDOM_DISPATCH: "{{.RANDOM_DISPATCH}}"
     requires:
       vars:
         - "RUN_ID"
         - "NUM_WORKERS"
+        - "RANDOM_DISPATCH"
 
   start:
     desc: Start the services (dispatcher, log-handler, worker, and redis)
@@ -41,6 +40,7 @@ tasks:
       - task: start-docker
         vars:
           NUM_WORKERS: 1
+          RANDOM_DISPATCH: false
           RUN_ID:
             sh: date "+%Y-%m-%d-%H%M"
 
@@ -101,5 +101,7 @@ tasks:
 
       # Give some time for pending tasks to complete
       - sleep 90
-
       - task: stop
+
+      # Run log parsing
+      - ./bin/log-parse --logs-dir=./logs/{{.RUN_ID}}

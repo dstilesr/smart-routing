@@ -19,16 +19,17 @@ var randomDispatch bool
 
 // Setup CLI flags
 func flagsSetup() {
-	flag.BoolVar(&randomDispatch, "random-dispatch", false, "Use random dispatching instead of 'smart' dispatching")
-	if randomDispatch {
-		slog.Warn("Using Random Dispatch Method!")
-	}
+	df := os.Getenv("RANDOM_DISPATCH") == "true"
+	flag.BoolVar(&randomDispatch, "random-dispatch", df, "Use random dispatching instead of 'smart' dispatching")
 }
 
 func main() {
 	// flags init
 	flagsSetup()
 	flag.Parse()
+	if randomDispatch {
+		slog.Warn("Using Random Dispatch Method!")
+	}
 
 	client := redis.NewClient(&redis.Options{
 		Addr: fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),

@@ -12,11 +12,11 @@ services:
     environment:
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
+      RANDOM_DISPATCH: "${RANDOM_DISPATCH:-false}"
     depends_on:
       - redis
     ports:
       - "8080:8080"
-    command: "{{DISPATCH_CMD:- --random-dispatch=false}}"
 
   log-handler:
     container_name: "log-handler"

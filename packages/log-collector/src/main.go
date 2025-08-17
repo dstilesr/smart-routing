@@ -39,7 +39,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer outFile.Close()
-	send := make(chan string)
+	send := make(chan string, 32)
 	out := make(chan writeResult)
 
 	// Start Worker and Monitor
