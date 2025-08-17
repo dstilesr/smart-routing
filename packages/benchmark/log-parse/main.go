@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 var logsDir string
@@ -31,9 +32,10 @@ func main() {
 		panic("Producer log file does not exist: " + prodLogs)
 	}
 
-	wrkSummary := processWorkerLogs(wrkLogs)
-	wrkSummary.printSummary()
-
-	prodSummary := processProducerLogs(prodLogs)
-	prodSummary.printSummary()
+	// Run processors on log files
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go processWorkerLogs(wrkLogs, &wg)
+	go processProducerLogs(prodLogs, &wg)
+	wg.Wait()
 }
