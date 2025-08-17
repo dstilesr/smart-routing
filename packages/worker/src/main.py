@@ -1,8 +1,8 @@
 import time
 from loguru import logger
 
-import logs
 import tasks
+import log_util as logs
 
 
 if __name__ == "__main__":

@@ -46,12 +46,12 @@ func (wid workerId) sendTask(t *taskRequest, r *redis.Client, c context.Context)
 
 	tJson, jsonErr := json.Marshal(t)
 	if jsonErr != nil {
-		slog.Error("JSON serialization error", "error", jsonErr)
+		slog.Error("JSON serialization error", "error", jsonErr, "task_id", t.TaskID)
 		return jsonErr
 	}
 	_, err := r.RPush(ctx, wid.getQueue(), tJson).Result()
 	if err != nil {
-		slog.Error("Unable to send task!", "error", err)
+		slog.Error("Unable to send task!", "error", err, "task_id", t.TaskID)
 		return err
 	}
 	return nil
@@ -74,6 +74,7 @@ func (wid workerId) runTask(t *taskRequest, r *redis.Client, c context.Context) 
 
 	m, err := pubsub.ReceiveMessage(ctx)
 	if err != nil {
+		slog.Error("Error receiving task result", "error", err, "task_id", t.TaskID)
 		return "", err
 	}
 	return m.Payload, nil

@@ -47,10 +47,10 @@ func selectWorkerQueue(t *taskRequest, r *redis.Client, c context.Context) (work
 func selectLabeledQueue(t *taskRequest, r *redis.Client, c context.Context) (workerId, error) {
 	labeled, err := getWorkersWithLabel(t.Label, r, c)
 	if err != nil {
-		slog.Error("Error getting workers with label", "error", err, "label", t.Label)
+		slog.Error("Error getting workers with label", "error", err, "label", t.Label, "task_id", t.TaskID)
 		return "", err
 	} else if len(labeled) == 0 {
-		slog.Warn("No workers found with label", "label", t.Label)
+		slog.Warn("No workers found with label", "label", t.Label, "task_id", t.TaskID)
 		return workerId("all"), nil
 	}
 
@@ -67,7 +67,7 @@ func selectLabeledQueue(t *taskRequest, r *redis.Client, c context.Context) (wor
 	case w := <-cn:
 		return w, nil
 	default:
-		slog.Warn("No available workers found with label", "label", t.Label)
+		slog.Warn("No available workers found with label", "label", t.Label, "task_id", t.TaskID)
 	}
 
 	return workerId("all"), nil

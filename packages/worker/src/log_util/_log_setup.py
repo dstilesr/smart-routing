@@ -1,4 +1,5 @@
 import sys
+import json
 import requests
 from loguru import logger
 from functools import partial
@@ -14,9 +15,28 @@ def _send_to_collector(log_msg: str, host: str):
     """
     requests.post(
         f"{host}/log",
-        data=log_msg,
+        data=formatter(log_msg.record),
         headers={"Content-Type": "text/plain"},
     )
+
+
+def formatter(record: dict) -> str:
+    """
+    JSON formatter for log records.
+    :param record:
+    :return:
+    """
+    log_rec = {
+        "time": record["time"].isoformat(),
+        "level": record["level"].name,
+        "msg": record["message"],
+        "name": record["name"],
+        "module": record["module"],
+        "function": record["function"],
+        "line": record["line"],
+        **record.get("extra", {}),
+    }
+    return json.dumps(log_rec) + "\n"
 
 
 def setup_logs(settings: LoggingSettings | None = None):
@@ -35,7 +55,6 @@ def setup_logs(settings: LoggingSettings | None = None):
         logger.add(
             partial(_send_to_collector, host=settings.collector_host),
             level=settings.collector_level,
-            format="{message}",
             serialize=False,
             enqueue=True,
         )

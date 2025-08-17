@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from functools import wraps, lru_cache
 from typing import ContextManager, Type, Optional, Iterator, Callable
 
+from . import exceptions as err
 from .schemas import TaskSchema
 from . import constants as const
 from .settings import WorkerSettings
@@ -107,12 +108,25 @@ class TaskRunner(ContextManager):
         else:
             self.__redis.srem(const.AVAILABLE_KEY, self.uuid)
 
+    def get_task_handler(self, task_type: str) -> TASK_TYPE:
+        """
+        Get the task handler for a specific task type.
+        :param task_type: The type of the task to get the handler for.
+        :return: The task handler function.
+        """
+        if task_type not in self.__task_handlers:
+            raise err.UnknownTaskError(
+                f"Task type '{task_type}' is not registered."
+            )
+        return self.__task_handlers[task_type]
+
     def listen(self) -> Iterator[str]:
         """
         Listen for tasks on the task runner's stream.
         """
         logger.info("Task runner listening for tasks [{}]", self.__queue)
         while True:
+            task = None
             try:
                 queue, task_raw = self.__redis.blpop(
                     [self.__queue, const.COMMON_QUEUE], timeout=0
@@ -122,9 +136,21 @@ class TaskRunner(ContextManager):
                     continue
 
                 task = TaskSchema.model_validate_json(task_raw)
-                handler = self.__task_handlers[task.task_type]
+                handler = self.get_task_handler(task.task_type)
                 result = handler(self.label_handler, task)
                 yield result
+
+            except err.TaskError as e:
+                bind = {}
+                if task is not None:
+                    bind = {"task_id": task.task_id}
+
+                logger.bind(**bind).error(
+                    "Task [{}] failed with error: {}",
+                    task.task_id,
+                    e,
+                )
+                yield "Task failed"
 
             except ValidationError as e:
                 logger.error("Invalid Task received! {}", e)
@@ -135,7 +161,12 @@ class TaskRunner(ContextManager):
                 break
 
             except Exception as e:
-                logger.error("Error while listening for tasks: [{}.{}]{}", type(e).__module__, type(e).__name__, e)
+                logger.error(
+                    "Error while listening for tasks: [{}.{}]{}",
+                    type(e).__module__,
+                    type(e).__name__,
+                    e,
+                )
                 break
 
     def add_task_function(
@@ -169,7 +200,9 @@ class TaskRunner(ContextManager):
                         task_type,
                         e,
                     )
-                    raise e
+                    raise err.TaskFailedError(
+                        f"Task [{task.task_id}] failed with error: {e}"
+                    )
                 finally:
                     self.update_availability(True)
 
