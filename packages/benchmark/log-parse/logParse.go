@@ -56,9 +56,6 @@ func scanLogFile(fp string, out chan<- *logRecord) {
 
 // Identify if a log has a record of a label miss from a worker
 func (lr *logRecord) isLabelMiss() bool {
-	if lr.Level != "error" {
-		return false
-	}
 	if labelMiss == nil {
 		slog.Error("Label miss regex is not compiled")
 		panic("Label miss regex is not compiled")
