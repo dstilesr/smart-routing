@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 )
 
 type writeResult struct {
@@ -13,8 +14,11 @@ type writeResult struct {
 
 // Worker function
 func handleMessages(in <-chan string, out chan<- writeResult, f *os.File) {
-	for message := range in {
-		n, err := f.WriteString(message + "\n")
+	for msg := range in {
+		if !strings.HasSuffix(msg, "\n") {
+			msg += "\n"
+		}
+		n, err := f.WriteString(msg)
 		if err != nil {
 			out <- writeResult{
 				fmt.Sprintf("Error writing to file: %v", err),
