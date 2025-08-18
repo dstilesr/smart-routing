@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"sync"
+	"math/rand"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-// Get the IDs for workers that are currently available
-func getAvailableWorkerIds(r *redis.Client, c context.Context) ([]workerId, error) {
-	ctx, cancel := context.WithTimeout(c, 1*time.Second)
+// Get the IDs for workers that are currently available with the given label
+func getAvailableWorkerIds(r *redis.Client, c context.Context, l string) ([]workerId, error) {
+	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
 	defer cancel()
-	m, err := r.SMembers(ctx, availableWorkersKey).Result()
+	lk := fmt.Sprintf("task-runners:labels:%s:workers", l)
+	m, err := r.SInter(ctx, availableWorkersKey, lk).Result()
 	if err != nil {
 		slog.Error("Unable to get available workers!", "error", err)
 		return []workerId{}, err
@@ -24,7 +25,7 @@ func getAvailableWorkerIds(r *redis.Client, c context.Context) ([]workerId, erro
 
 // Get the IDs for all currently running workers
 func getRunningWorkerIds(r *redis.Client, c context.Context) ([]workerId, error) {
-	ctx, cancel := context.WithTimeout(c, 1*time.Second)
+	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
 	defer cancel()
 	m, err := r.SMembers(ctx, runningWorkerskey).Result()
 	if err != nil {
@@ -45,31 +46,15 @@ func selectWorkerQueue(t *taskRequest, r *redis.Client, c context.Context) (work
 
 // Select a worker based on the task label and worker labels
 func selectLabeledQueue(t *taskRequest, r *redis.Client, c context.Context) (workerId, error) {
-	labeled, err := getWorkersWithLabel(t.Label, r, c)
+	available, err := getAvailableWorkerIds(r, c, t.Label)
 	if err != nil {
-		slog.Error("Error getting workers with label", "error", err, "label", t.Label, "task_id", t.TaskID)
+		slog.Error("Error getting available workers", "error", err, "label", t.Label)
 		return "", err
-	} else if len(labeled) == 0 {
-		slog.Warn("No workers found with label", "label", t.Label, "task_id", t.TaskID)
-		return workerId("all"), nil
 	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(labeled))
-	cn := make(chan workerId, len(labeled))
-
-	for _, wid := range labeled {
-		go wid.isAvailableAsync(r, c, cn, &wg)
+	if len(available) > 0 {
+		return available[rand.Intn(len(available))], nil
 	}
-	wg.Wait()
-	close(cn)
-	select {
-	case w := <-cn:
-		return w, nil
-	default:
-		slog.Warn("No available workers found with label", "label", t.Label, "task_id", t.TaskID)
-	}
-
+	slog.Warn("No available workers found with label", "label", t.Label, "task_id", t.TaskID)
 	return workerId("all"), nil
 }
 

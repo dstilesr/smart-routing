@@ -34,7 +34,7 @@ func handleMessages(in <-chan string, out chan<- writeResult, f *os.File) {
 func monitorResults(out <-chan writeResult) {
 	for result := range out {
 		if result.Success {
-			slog.Info("Successfully wrote log message")
+			slog.Debug("Successfully wrote log message")
 		} else {
 			slog.Error("Failed to write log message", "error", result.Message)
 		}

@@ -75,7 +75,7 @@ func main() {
 				slog.Error("Error writing response", "error", rspErr)
 				return
 			}
-			slog.Info("Response sent", "bytes_written", n)
+			slog.Debug("Response sent", "bytes_written", n)
 		},
 	)
 
