@@ -75,3 +75,54 @@ task run-benchmark NUM_WORKERS=2 RANDOM_DISPATCH=false -- \
 ```
 
 ### Some Results
+
+#### Random Dispatch Enabled
+
+**Call**
+```bash
+task run-benchmark NUM_WORKERS=3 RANDOM_DISPATCH=true -- \
+     --requests 500 \
+     --producers 2 \
+     --wait-avg 3.0 \
+     --wait-stddev 1.0 \
+     --labels 8
+``` 
+**Results**
+```
+Producer Log Summary:
+  Total Requests: 500
+  Total Failed Requests: 0
+  Total Synchronous Requests: 259
+  Total Dispatched Jobs: 500
+Worker Log Summary:
+  Total Label Misses: 369
+  Tasks Completed: 500
+  Average Task Runtime: 4.5478 seconds
+```
+
+#### Random Dispatch Disabled
+
+**Call**
+```bash
+task run-benchmark NUM_WORKERS=3 RANDOM_DISPATCH=false -- \
+     --requests 500 \
+     --producers 2 \
+     --wait-avg 3.0 \
+     --wait-stddev 1.0 \
+    --labels 8
+```
+
+**Results**
+```
+Producer Log Summary:
+  Total Requests: 500
+  Total Failed Requests: 0
+  Total Synchronous Requests: 246
+  Total Dispatched Jobs: 500
+Worker Log Summary:
+  Total Label Misses: 286
+  Tasks Completed: 500
+  Average Task Runtime: 4.1241 seconds
+```
+
+Here we can see that we get a significant reduction in the number of label misses with respect to random dispatch, but there is still plenty of room for improvement!
