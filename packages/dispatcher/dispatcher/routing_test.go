@@ -5,6 +5,23 @@ import (
 	"testing"
 )
 
+// Test getting available workers with a given label
+func TestGetAvailableWorkersWithLabel(t *testing.T) {
+	r, c := mockRedis(true)
+	defer r.Close()
+
+	ws, err := getAvailableWorkerIds(r, c, "label-1")
+	if err != nil {
+		t.Fatalf("Error getting available workers with label: %v", err)
+	}
+	if len(ws) != 1 {
+		t.Errorf("Expected 1 available worker with label 'label-1', got %d", len(ws))
+	}
+	if ws[0] != "work1" {
+		t.Errorf("Expected worker 'work1', got: %s", ws[0])
+	}
+}
+
 // Test getting workers with a given label
 func TestGetWorkersWithLabel(t *testing.T) {
 	r, c := mockRedis(true)
