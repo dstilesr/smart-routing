@@ -76,6 +76,7 @@ class LabelHandler:
         self.redis.sadd(
             const.LABEL_KEY_FMT.format(label=label), self.runner_uuid
         )
+        self.redis.zincrby(const.LABEL_COUNTS_KEY, 1, self.runner_uuid)
 
     def remove_label(self, label: str) -> datetime | None:
         """
@@ -102,6 +103,7 @@ class LabelHandler:
         self.redis.srem(
             const.LABEL_KEY_FMT.format(label=label), self.runner_uuid
         )
+        self.redis.zincrby(const.LABEL_COUNTS_KEY, -1, self.runner_uuid)
         logger.debug("Label deregistered [{}]", label)
 
     def clear_all(self):
