@@ -113,7 +113,7 @@ func TestSelectWorkerWithoutLabel(t *testing.T) {
 	defer r.Close()
 
 	tr := taskRequest{
-		Label:        "label-3",
+		Label:        "label-9",
 		Parameters:   "{}",
 		TaskType:     "test-task",
 		ReturnResult: false,
@@ -125,5 +125,22 @@ func TestSelectWorkerWithoutLabel(t *testing.T) {
 	}
 	if wid != "all" {
 		t.Errorf("Expectedtask to be sent to common queue, got: %s", wid)
+	}
+}
+
+// Test getting workers that have capacity for more labels
+func TestGetWorkersWithCapacity(t *testing.T) {
+	r, c := mockRedis(true)
+	defer r.Close()
+
+	ws, err := workersWithLabelCapacity(r, c)
+	if err != nil {
+		t.Fatalf("Error getting workers with capacity: %v", err)
+	}
+	if len(ws) != 2 {
+		t.Errorf("Expected 2 workers with capacity, got %d", len(ws))
+	}
+	if !slices.Contains(ws, "work2") || !slices.Contains(ws, "u-work2") {
+		t.Errorf("Expected workers work2 and u-work2 with capacity, got: %v", ws)
 	}
 }

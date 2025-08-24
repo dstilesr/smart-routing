@@ -16,11 +16,13 @@ import (
 
 // flags
 var randomDispatch bool
+var maxLabelsPerWorker int
 
 // Setup CLI flags
 func flagsSetup() {
 	df := os.Getenv("RANDOM_DISPATCH") == "true"
 	flag.BoolVar(&randomDispatch, "random-dispatch", df, "Use random dispatching instead of 'smart' dispatching")
+	flag.IntVar(&maxLabelsPerWorker, "max-labels-worker", 2, "Maximum number of labels a worker can have")
 }
 
 func main() {

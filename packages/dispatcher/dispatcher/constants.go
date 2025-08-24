@@ -4,6 +4,8 @@ const availableWorkersKey = "task-runners:available"
 
 const runningWorkerskey = "task-runners:running"
 
+const workersLabelCountKey = "task-runners:labels:count"
+
 const taskTimeoutSeconds = 45
 
-const pollIntervalMilliseconds = 50
+const opTimeoutMilliseconds = 250

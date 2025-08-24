@@ -16,7 +16,7 @@ func (wid workerId) getQueue() string {
 
 // Check if the worker is available by checking if it is in the available workers set
 func (wid workerId) isAvailable(r *redis.Client, c context.Context) (bool, error) {
-	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 
 	a, err := r.SIsMember(ctx, availableWorkersKey, string(wid)).Result()
@@ -28,7 +28,7 @@ func (wid workerId) isAvailable(r *redis.Client, c context.Context) (bool, error
 }
 
 func (wid workerId) sendTask(t *taskRequest, r *redis.Client, c context.Context) error {
-	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 
 	tJson, jsonErr := json.Marshal(t)

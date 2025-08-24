@@ -12,7 +12,7 @@ import (
 
 // Get the IDs for workers that are currently available with the given label
 func availableWorkersLabel(r *redis.Client, c context.Context, l string) ([]workerId, error) {
-	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 	lk := fmt.Sprintf("task-runners:labels:%s:workers", l)
 	m, err := r.SInter(ctx, availableWorkersKey, lk).Result()
@@ -25,7 +25,7 @@ func availableWorkersLabel(r *redis.Client, c context.Context, l string) ([]work
 
 // Get all available worker IDs
 func availableWorkers(r *redis.Client, c context.Context) ([]workerId, error) {
-	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 
 	m, err := r.SMembers(ctx, availableWorkersKey).Result()
@@ -39,7 +39,7 @@ func availableWorkers(r *redis.Client, c context.Context) ([]workerId, error) {
 
 // Get the IDs for all currently running workers
 func getRunningWorkerIds(r *redis.Client, c context.Context) ([]workerId, error) {
-	ctx, cancel := context.WithTimeout(c, 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 	m, err := r.SMembers(ctx, runningWorkerskey).Result()
 	if err != nil {
@@ -75,12 +75,31 @@ func selectLabeledQueue(t *taskRequest, r *redis.Client, c context.Context) (wor
 // Get the list of workers that have a specific label
 func getWorkersWithLabel(label string, r *redis.Client, c context.Context) ([]workerId, error) {
 	key := fmt.Sprintf("task-runners:labels:%s:workers", label)
-	ctx, cancel := context.WithTimeout(c, 250*time.Millisecond)
+	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 
 	m, err := r.SMembers(ctx, key).Result()
 	if err != nil {
 		slog.Error("Unable to get workers with label!", "error", err, "label", label)
+		return []workerId{}, err
+	}
+	return stringToWidSlice(m), nil
+}
+
+// Get the list of workers that can take on an additional label
+func workersWithLabelCapacity(r *redis.Client, c context.Context) ([]workerId, error) {
+	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
+	defer cancel()
+
+	opts := redis.ZRangeBy{
+		Min:    "0",
+		Max:    fmt.Sprintf("%d", maxLabelsPerWorker-1),
+		Offset: 0,
+		Count:  20,
+	}
+	m, err := r.ZRangeByScore(ctx, workersLabelCountKey, &opts).Result()
+	if err != nil {
+		slog.Error("Unable to get workers with label capacity!", "error", err)
 		return []workerId{}, err
 	}
 	return stringToWidSlice(m), nil

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"testing"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
@@ -53,4 +54,36 @@ func setupTestData(r *redis.Client, c context.Context) {
 	if err != nil {
 		panic(err)
 	}
+
+	// Label3 - for workers work1 and u-work1 to test max labels per worker
+	key = fmt.Sprintf("task-runners:labels:%s:workers", "label-3")
+	_, err = r.SAdd(c, key, "work1", "u-work1").Result()
+	if err != nil {
+		panic(err)
+	}
+
+	// Counts
+	_, err = r.ZIncrBy(c, workersLabelCountKey, 2, "work1").Result()
+	if err != nil {
+		panic(err)
+	}
+	_, err = r.ZIncrBy(c, workersLabelCountKey, 2, "u-work1").Result()
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = r.ZIncrBy(c, workersLabelCountKey, 1, "u-work2").Result()
+	if err != nil {
+		panic(err)
+	}
+	_, err = r.ZIncrBy(c, workersLabelCountKey, 1, "work2").Result()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestMain(m *testing.M) {
+	maxLabelsPerWorker = 2
+	randomDispatch = false
+	m.Run()
 }
