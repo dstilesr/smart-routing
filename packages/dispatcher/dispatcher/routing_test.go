@@ -10,7 +10,7 @@ func TestGetAvailableWorkersWithLabel(t *testing.T) {
 	r, c := mockRedis(true)
 	defer r.Close()
 
-	ws, err := getAvailableWorkerIds(r, c, "label-1")
+	ws, err := availableWorkersLabel(r, c, "label-1")
 	if err != nil {
 		t.Fatalf("Error getting available workers with label: %v", err)
 	}
@@ -19,6 +19,22 @@ func TestGetAvailableWorkersWithLabel(t *testing.T) {
 	}
 	if ws[0] != "work1" {
 		t.Errorf("Expected worker 'work1', got: %s", ws[0])
+	}
+}
+
+func TestGetAvailableWorkers(t *testing.T) {
+	r, c := mockRedis(true)
+	defer r.Close()
+
+	ws, err := availableWorkers(r, c)
+	if err != nil {
+		t.Fatalf("Error getting available workers: %v", err)
+	}
+	if len(ws) != 2 {
+		t.Errorf("Expected 2 available workers, got %d", len(ws))
+	}
+	if !slices.Contains(ws, "work1") || !slices.Contains(ws, "work2") {
+		t.Errorf("Expected workers work1 and work2, got: %v", ws)
 	}
 }
 
