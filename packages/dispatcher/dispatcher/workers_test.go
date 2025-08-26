@@ -106,3 +106,22 @@ func TestRunTaskSync(t *testing.T) {
 		t.Errorf("Expected task result to be '%s', got '%s'", msg, rsp)
 	}
 }
+
+func TestContainsSorted(t *testing.T) {
+	wids := workerIds{"worker1", "worker2", "worker3", "worker4", "worker5"}
+	for i := range 5 {
+		wid := workerId(fmt.Sprintf("worker%d", i+1))
+		if !wids.containsSorted(wid) {
+			t.Errorf("Expected workerIds to contain %s, but it did not", wid)
+		}
+	}
+
+	if wids.containsSorted("worker6") {
+		t.Error("Expected workerIds to not contain worker6, but it did")
+	}
+
+	wids = workerIds{}
+	if wids.containsSorted("worker1") {
+		t.Error("Expected empty workerIds to not contain any worker, but it did")
+	}
+}

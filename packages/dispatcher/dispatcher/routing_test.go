@@ -123,8 +123,8 @@ func TestSelectWorkerWithoutLabel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error selecting labeled queue: %v", err)
 	}
-	if wid != "all" {
-		t.Errorf("Expectedtask to be sent to common queue, got: %s", wid)
+	if wid != "work2" {
+		t.Errorf("Expected task to be sent to available worker queue, got: %s", wid)
 	}
 }
 
