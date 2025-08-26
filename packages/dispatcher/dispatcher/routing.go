@@ -87,7 +87,12 @@ func selectLabeledQueue(t *taskRequest, r *redis.Client, c context.Context) (wor
 	}
 	for _, w := range capable {
 		if av.containsSorted(w) {
-			slog.Info("Selecting worker with label capacity", "worker", w, "label", t.Label, "task_id", t.TaskID)
+			slog.Info(
+				"Selecting worker with label capacity",
+				"worker", w,
+				"label", t.Label,
+				"task_id", t.TaskID,
+			)
 			return w, nil
 		}
 	}
