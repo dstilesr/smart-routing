@@ -2,6 +2,7 @@ package main
 
 // String alias to represent a running worker's ID.
 type workerId string
+type workerIds []workerId
 
 // A request to run a task on a worker.
 type taskRequest struct {

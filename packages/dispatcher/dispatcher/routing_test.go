@@ -26,7 +26,7 @@ func TestGetAvailableWorkers(t *testing.T) {
 	r, c := mockRedis(true)
 	defer r.Close()
 
-	ws, err := availableWorkers(r, c)
+	ws, err := availableWorkers(r, c, false)
 	if err != nil {
 		t.Fatalf("Error getting available workers: %v", err)
 	}

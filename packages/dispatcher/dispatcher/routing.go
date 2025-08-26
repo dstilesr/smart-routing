@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"slices"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
 // Get the IDs for workers that are currently available with the given label
-func availableWorkersLabel(r *redis.Client, c context.Context, l string) ([]workerId, error) {
+func availableWorkersLabel(r *redis.Client, c context.Context, l string) (workerIds, error) {
 	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 	lk := fmt.Sprintf("task-runners:labels:%s:workers", l)
@@ -23,8 +24,8 @@ func availableWorkersLabel(r *redis.Client, c context.Context, l string) ([]work
 	return stringToWidSlice(m), nil
 }
 
-// Get all available worker IDs
-func availableWorkers(r *redis.Client, c context.Context) ([]workerId, error) {
+// Get all available worker IDs.
+func availableWorkers(r *redis.Client, c context.Context, sorted bool) (workerIds, error) {
 	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 
@@ -33,12 +34,15 @@ func availableWorkers(r *redis.Client, c context.Context) ([]workerId, error) {
 		slog.Error("Unable to get available workers!", "error", err)
 		return []workerId{}, err
 	}
+	if sorted {
+		slices.Sort(m)
+	}
 
 	return stringToWidSlice(m), nil
 }
 
 // Get the IDs for all currently running workers
-func getRunningWorkerIds(r *redis.Client, c context.Context) ([]workerId, error) {
+func getRunningWorkerIds(r *redis.Client, c context.Context) (workerIds, error) {
 	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 	m, err := r.SMembers(ctx, runningWorkerskey).Result()
@@ -69,11 +73,29 @@ func selectLabeledQueue(t *taskRequest, r *redis.Client, c context.Context) (wor
 		return available[rand.Intn(len(available))], nil
 	}
 	slog.Warn("No available workers found with label", "label", t.Label, "task_id", t.TaskID)
+
+	// Select available worker with capacity for additional labels
+	capable, err := workersWithLabelCapacity(r, c)
+	if err != nil {
+		slog.Error("Error getting workers with label capacity", "error", err)
+		return "", err
+	}
+	av, err := availableWorkers(r, c, true)
+	if err != nil {
+		slog.Error("Error getting available workers", "error", err)
+		return "", err
+	}
+	for _, w := range capable {
+		if av.containsSorted(w) {
+			slog.Info("Selecting worker with label capacity", "worker", w, "label", t.Label, "task_id", t.TaskID)
+			return w, nil
+		}
+	}
 	return workerId("all"), nil
 }
 
 // Get the list of workers that have a specific label
-func getWorkersWithLabel(label string, r *redis.Client, c context.Context) ([]workerId, error) {
+func getWorkersWithLabel(label string, r *redis.Client, c context.Context) (workerIds, error) {
 	key := fmt.Sprintf("task-runners:labels:%s:workers", label)
 	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
@@ -87,7 +109,7 @@ func getWorkersWithLabel(label string, r *redis.Client, c context.Context) ([]wo
 }
 
 // Get the list of workers that can take on an additional label
-func workersWithLabelCapacity(r *redis.Client, c context.Context) ([]workerId, error) {
+func workersWithLabelCapacity(r *redis.Client, c context.Context) (workerIds, error) {
 	ctx, cancel := context.WithTimeout(c, opTimeoutMilliseconds*time.Millisecond)
 	defer cancel()
 
