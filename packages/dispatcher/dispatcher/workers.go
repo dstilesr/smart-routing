@@ -67,11 +67,11 @@ func (wid workerId) runTask(t *taskRequest, r *redis.Client, c context.Context) 
 	return m.Payload, nil
 }
 
-// Determine whether a sorted slice of worker IDs contains a specific worker ID using binary search.
+// Determine whether a *sorted* slice of worker IDs contains a specific worker ID using binary search.
 func (wids workerIds) containsSorted(wid workerId) bool {
-	var i, j int = 0, len(wids) - 1
+	var i, j, curr int = 0, len(wids) - 1, 0
 	for i <= j {
-		curr := (i + j) / 2
+		curr = (i + j) / 2
 		switch {
 		case wids[curr] == wid:
 			return true

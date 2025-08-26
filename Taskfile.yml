@@ -28,6 +28,7 @@ tasks:
     env:
       LOG_FILE: "/app/logs/{{.RUN_ID}}/collector.log"
       RANDOM_DISPATCH: "{{.RANDOM_DISPATCH}}"
+      WORKER_CAPACITY: "{{.WORKER_CAPACITY | default 2}}"
     requires:
       vars:
         - "RUN_ID"
@@ -84,6 +85,7 @@ tasks:
           RUN_ID: "{{.RUN_ID}}"
           NUM_WORKERS: "{{.NUM_WORKERS}}"
           RANDOM_DISPATCH: "{{.RANDOM_DISPATCH}}"
+          WORKER_CAPACITY: "{{.WORKER_CAPACITY | default 2}}"
 
       - task: build-producer
       - task: build-log-parser
